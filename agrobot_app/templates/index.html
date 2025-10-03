@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Agrobot</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    body { background:#f4f7f6; }
+    .chat-box { max-height: 400px; overflow-y: auto; background:white; border-radius:10px; padding:1rem; margin-bottom:1rem; }
+    .msg-user { text-align:right; margin:5px; }
+    .msg-bot { text-align:left; margin:5px; }
+    .bubble { display:inline-block; padding:10px 15px; border-radius:20px; max-width:70%; white-space:pre-wrap; } 
+    .bubble-user { background:#d1e7dd; }
+    .bubble-bot { background:#e2e3e5; }
+    #preview { max-height:100px; display:none; margin-top:5px; border-radius:8px; }
+  </style>
+  {% csrf_token %}
+</head>
+<body>
+<div class="container py-4">
+  <div class="card shadow p-3">
+    <h2 class="text-center mb-3"><i class="bi bi-book"></i> Agrobot <i class="bi bi-chevron-double-right"></i></h2>
+
+    <div class="chat-box" id="chatBox"></div>
+
+<script>
+  const startingMessages = [
+    "Hello! I am Agrobot, your virtual plant assistant. Ask me about crop issues or upload a leaf image for analysis.",
+    "Hi there! I'm Agrobot. I can help you detect plant problems and suggest solutions. Give it a try!",
+    "Greetings! Agrobot here, ready to help you understand your crop health. Upload a leaf or ask me anything about plants.",
+    "Welcome! I'm your Agrobot guide. Curious about your crops? Ask away or share a leaf image for analysis.",
+    "Hello! I am Agrobot, your plant expert assistant. Let's figure out what's happening with your crops.",
+    "Hi! I'm Agrobot. I can help identify issues in your crops and suggest possible solutions. Ask me anything!",
+    "Hello! I am Agrobot, here to assist with your plant health questions and leaf image analysis.",
+    "Greetings! I'm Agrobot, your crop assistant. Share your concerns or upload a leaf for disease detection.",
+    "Hi there! Agrobot at your service. Let's find out what's going on with your plants today.",
+    "Hello! I am Agrobot, ready to help you understand your crop conditions and suggest remedies."
+  ];
+
+  const chatBox = document.getElementById('chatBox');
+  const startMsg = startingMessages[Math.floor(Math.random() * startingMessages.length)];
+
+  const div = document.createElement('div');
+  div.className = 'msg-bot';
+  const bubble = document.createElement('span');
+  bubble.className = 'bubble bubble-bot';
+  div.appendChild(bubble);
+  chatBox.appendChild(div);
+
+  async function typeMessage(bubble, text) {
+    const lines = text.split("\n");
+    bubble.textContent = "";
+    for (let line of lines) {
+      for (let i = 0; i < line.length; i++) {
+        bubble.textContent += line[i];
+        await new Promise(resolve => setTimeout(resolve, 20));
+      }
+      bubble.textContent += "\n";
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  typeMessage(bubble, startMsg);
+</script>
+
+    <div class="mb-3">
+      <label for="langSelect" class="form-label">Select Language:</label>
+      <select id="langSelect" class="form-select">
+        <option value="en" selected>English</option>
+        <option value="ta">தமிழ் (Tamil)</option>
+        <option value="hi">हिंदी (Hindi)</option>
+        <option value="kn">ಕನ್ನಡ (Kannada)</option>
+        <option value="te">తెలుగు (Telugu)</option>
+        <option value="ml">മലയാളം (Malayalam)</option>
+      </select>
+    </div>
+
+    <div class="input-group mb-3">
+      <textarea id="textInput" class="form-control" placeholder="Type your question..."></textarea>
+      <input type="file" id="imageInput" name="image" accept="image/*" style="display:none;">
+      <button id="uploadBtn" class="btn btn-warning"><i class="bi bi-upload"></i> Upload</button>
+      <button id="speakBtn" class="btn btn-danger"><i class="bi bi-mic"></i> Mic</button>
+      <button id="sendBtn" class="btn btn-success">Send <i class="bi bi-check2-circle"></i></button>
+    </div>
+    <img id="preview" class="img-fluid" />
+  </div>
+</div>
+
+<script>
+  function addMessage(text, sender, typing=false){
+    const box = document.getElementById('chatBox');
+    const div = document.createElement('div');
+    div.className = sender === 'user' ? 'msg-user' : 'msg-bot';
+    const bubble = document.createElement('span');
+    bubble.className = 'bubble ' + (sender === 'user' ? 'bubble-user' : 'bubble-bot');
+    div.appendChild(bubble);
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+
+    if(typing && sender === 'bot'){
+      bubble.textContent = '';
+      let i = 0;
+      const interval = setInterval(()=>{
+        bubble.textContent += text.charAt(i);
+        i++;
+        box.scrollTop = box.scrollHeight;
+        if(i >= text.length) clearInterval(interval);
+      }, 20);
+    } else {
+      bubble.textContent = text;
+    }
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i=0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length+1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length+1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  document.getElementById('uploadBtn').addEventListener('click', ()=>{
+    document.getElementById('imageInput').click();
+  });
+
+  let selectedImage = null;
+  document.getElementById('imageInput').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(file){
+      selectedImage = file;
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        //const img = document.getElementById('preview');  
+        img.src = ev.target.result;
+        img.style.display = "block";
+      }
+      reader.readAsDataURL(file);
+    }
+  });
+
+  document.getElementById('sendBtn').addEventListener('click', async ()=>{
+    const text = document.getElementById('textInput').value;
+    const lang = document.getElementById('langSelect').value;
+
+    if(selectedImage){  
+      addMessage("Uploaded image for analysis...", "user");
+      addMessage("Analyzing image...", "bot");
+      const botMsg = document.querySelector("#chatBox .msg-bot:last-child .bubble");
+
+      const formData = new FormData();
+      formData.append("image", selectedImage);
+      formData.append("lang", lang);  
+
+      try {
+        const res = await fetch('/predict_disease/', {
+          method: 'POST',
+          headers: {'X-CSRFToken': csrftoken},
+          body: formData
+        });
+        const data = await res.json();
+        botMsg.parentNode.remove();
+
+        if(data.disease){
+          addMessage(data.disease, "bot", true);
+        } else {
+          addMessage(data.error || "Prediction failed.", "bot", true);
+        }
+      } catch(err){
+        botMsg.parentNode.remove();
+        addMessage("Error: " + err, "bot", true);
+      }
+
+      selectedImage = null;
+      document.getElementById('preview').style.display = "none";
+    }
+    else if(text){
+      addMessage(text, 'user');
+      addMessage("Bot is typing...", 'bot');
+      const placeholder = document.querySelector("#chatBox .msg-bot:last-child .bubble");
+
+      try {
+        const res = await fetch('/process_text/', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
+          body:JSON.stringify({text, lang})
+        });
+        const j = await res.json();
+        placeholder.parentNode.remove();
+
+        addMessage(j.answer, 'bot', true);
+         /*#i just leave this speech part for testing purpose 
+        if(window.speechSynthesis){
+          const utter = new SpeechSynthesisUtterance(j.answer);
+          const langMap = {
+            "en": "en-US",
+            "ta": "ta-IN",
+            "hi": "hi-IN",
+            "kn": "kn-IN",
+            "te": "te-IN",
+            "ml": "ml-IN"
+          };
+          utter.lang = langMap[lang] || "en-US";
+          speechSynthesis.speak(utter);
+        }*/
+
+      } catch(err){
+        placeholder.parentNode.remove();
+        addMessage("Error: "+err, "bot", true);
+      }
+
+      document.getElementById('textInput').value = "";
+    }
+  });
+
+  document.getElementById('speakBtn').addEventListener('click', ()=>{
+    if(!('webkitSpeechRecognition' in window)){
+      alert("Speech recognition not supported in this browser.");
+      return;
+    }
+    const recog = new webkitSpeechRecognition();
+    const lang = document.getElementById('langSelect').value;
+    const langMap = { "en":"en-IN","ta":"ta-IN","hi":"hi-IN","kn":"kn-IN","te":"te-IN","ml":"ml-IN" };
+    recog.lang = langMap[lang] || "en-IN";
+    recog.onresult = (e)=>{
+      const text = e.results[0][0].transcript;
+      addMessage(text, 'user');
+      document.getElementById('textInput').value = text;
+    }
+    recog.start();
+  });
+</script>
+</body>
+</html>

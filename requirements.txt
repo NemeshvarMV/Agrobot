@@ -1,0 +1,15 @@
+Django>=4.2,<5.0
+langdetect>=1.0.9
+googletrans==4.0.0-rc1
+language-tool-python>=2.7.1
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# Admin import/export for SymptomEntry data
+django-import-export>=3.3.0
+tablib>=3.5.0
+
+# TensorFlow for image model (use intel build on Windows for better compat)
+tensorflow-intel>=2.11; sys_platform == "win32"
+tensorflow>=2.11; sys_platform != "win32"
