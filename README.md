@@ -1,5 +1,5 @@
-# Agrobot - Django Project (Minimal Skeleton)
-This is a minimal Django project skeleton for the **Agrobot** assignment (no pretrained models).
+# Agrobot - Django Project
+This is a Django project skeleton for the **Agrobot**.
 It includes:
 - Text, image and voice front-end (voice via browser Web Speech API)
 - Rule-based symptom matching (difflib + symptom DB)
@@ -18,4 +18,3 @@ IMPORTANT:
   5. Run server: `python manage.py runserver`
 - For voice support in the browser, use the included JS (Web Speech API).
 
-This skeleton is intended as a starting point. Replace/extend the `symptom_db` in agrobot_app/utils.py with your own curated data.
